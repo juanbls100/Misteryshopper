@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mystery Shopper App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Un gris azulado claro */
+            background-image: url('https://images.unsplash.com/photo-1549399590-d4766d744f4d?q=80&w=1920&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'); /* Imagen de fondo de agencia automotriz */
+            background-size: cover; /* Cubre todo el área */
+            background-position: center; /* Centra la imagen */
+            background-repeat: no-repeat; /* No repite la imagen */
+            background-attachment: fixed; /* La imagen de fondo permanece fija al hacer scroll */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        /* Capa semitransparente sobre el fondo para mejorar la legibilidad del contenido */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4); /* Oscurece el fondo */
+            z-index: -1; /* Asegura que esté detrás del contenido */
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 16px; /* Bordes más redondeados */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Sombra más pronunciada */
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            z-index: 1; /* Asegura que el contenedor esté sobre la capa de fondo */
+        }
+        .input-field {
+            padding: 12px 16px;
+            border: 1px solid #cbd5e1; /* Gris claro */
+            border-radius: 8px; /* Bordes redondeados */
+            font-size: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease-in-out;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #3b82f6; /* Azul de Tailwind */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); /* Sombra de enfoque */
+        }
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            background-color: #9ca3af; /* Gris para botones deshabilitados */
+        }
+        .btn-primary {
+            background-color: #3b82f6; /* Azul de Tailwind */
+            color: white;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background-color: #2563eb; /* Azul más oscuro */
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background-color: #e2e8f0; /* Gris claro */
+            color: #475569; /* Gris oscuro */
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background-color: #cbd5e1; /* Gris un poco más oscuro */
+            transform: translateY(-1px);
+        }
+        .btn-danger {
+            background-color: #ef4444; /* Rojo de Tailwind */
+            color: white;
+        }
+        .btn-danger:hover:not(:disabled) {
+            background-color: #dc2626; /* Rojo más oscuro */
+            transform: translateY(-1px);
+        }
+        .message-box {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            z-index: 1000;
+        }
+        .message-box.show {
+            opacity: 1;
+        }
+        .icon {
+            width: 1.25em; /* Ajusta el tamaño del icono con respecto al texto */
+            height: 1.25em;
+            fill: currentColor; /* El icono tomará el color del texto del botón */
+        }
+        .recording-indicator {
+            display: none;
+            width: 12px;
+            height: 12px;
+            background-color: red;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        .recording-indicator.active {
+            display: block;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.7; }
+        }
+        /* Estilos responsivos para la cuadrícula de fotos */
+        #photos-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+        }
+        #photos-container img {
+            width: 100%;
+            height: 150px; /* Altura fija para las miniaturas */
+            object-fit: cover; /* Asegura que la imagen cubra el área sin distorsionarse */
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .radio-group input[type="radio"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #cbd5e1;
+            border-radius: 50%;
+            outline: none;
+            transition: border-color 0.2s ease-in-out;
+            position: relative;
+        }
+        .radio-group input[type="radio"]:checked {
+            border-color: #3b82f6;
+        }
+        .radio-group input[type="radio"]:checked::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            background-color: #3b82f6;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold text-center text-gray-800">Mystery Shopper App</h1>
+
+        <div id="auth-section" class="space-y-6">
+            <h2 class="text-2xl font-semibold text-center text-gray-700">Acceso / Registro</h2>
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Usuario:</label>
+                <input type="text" id="username" class="input-field" placeholder="Introduce tu usuario">
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña:</label>
+                <input type="password" id="password" class="input-field" placeholder="Introduce tu contraseña">
+            </div>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button id="login-btn" class="btn btn-primary flex-1">
+                    <svg class="icon" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"></path>
+                        <path d="M20 12h-13l3 -3m0 6l-3 -3"></path>
+                    </svg>
+                    Iniciar Sesión
+                </button>
+                <button id="register-btn" class="btn btn-secondary flex-1">
+                    <svg class="icon" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"></path>
+                        <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>
+                    </svg>
+                    Registrarse
+                </button>
+            </div>
+            <p class="text-sm text-center text-gray-500 mt-4">
+                <span id="user-id-display"></span>
+            </p>
+        </div>
+
+        <div id="app-section" class="hidden space-y-6">
+            <h2 class="text-2xl font-semibold text-center text-gray-700">Bienvenido, <span id="current-username" class="text-blue-600"></span>!</h2>
+
+            <button id="start-visit-btn" class="btn btn-primary w-full" disabled>
+                <svg class="icon" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                    <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"></path>
+                    <path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z"></path>
+                    <path d="M10 14l2 2l4 -4"></path>
+                </svg>
+                Iniciar Nueva Visita / Cuestionario
+            </button>
+
+            <div class="bg-blue-50 p-6 rounded-lg shadow-sm">
+                <h3 class="text-xl font-medium text-blue-800 mb-4 flex items-center gap-2">
+                    <svg class="icon" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M9 12v6a3 3 0 0 0 6 0v-6a3 3 0 0 0 -6 0"></path>
+                        <path d="M12 12v-8a4 4 0 0 1 8 0v8"></path>
+                        <path d="M4 12v-8a4 4 0 0 1 8 0v8"></path>
+                    </svg>
+                    Grabación de Conversación
+                </h3>
+                <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                    <button id="record-btn" class="btn btn-primary flex-1">
+                        <div id="recording-indicator" class="recording-indicator mr-2"></div>
+                        <svg class="icon" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                            <path d="M15 10a3 3 0 1 0 -6 0v5a3 3 0 0 0 6 0v-5z"></path>
+                            <path d="M12 17v4"></path>
+                            <path d="M8 21h8"></path>
+                            <path d="M12 17a9 9 0 0 0 9 -9v-1a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v1a9 9 0 0 0 9 9z"></path>
+                        </svg>
+                        Iniciar Grabación
+                    </button>
+                    <button id="stop-record-btn" class="btn btn-danger flex-1" disabled>
+                        <svg class="icon" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                            <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                        </svg>
+                        Detener Grabación
+                    </button>
+                </div>
+                <div id="audio-recordings-container" class="space-y-2">
+                    </div>
+            </div>
+
+            <div class="bg-green-50 p-6 rounded-lg shadow-sm">
+                <h3 class="text-xl font-medium text-green-800 mb-4 flex items-center gap-2">
+                    <svg class="icon" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M5 7h14a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2"></path>
+                        <path d="M17 7v-2a2 2 0 0 0 -2 -2h-1a2 2 0 0 0 -2 2v2"></path>
+                        <path d="M9 13a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path>
+                    </svg>
+                    Capturar Fotos
+                </h3>
+                <input type="file" id="photo-input" accept="image/*" capture="environment" multiple class="hidden">
+                <button id="take-photo-btn" class="btn btn-primary w-full mb-4">
+                    <svg class="icon" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M15 8h.01"></path>
+                        <path d="M12.5 21h-6.5a3 3 0 0 1 -3 -3v-12a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v6.5"></path>
+                        <path d="M12 12l4 -4l3 3l-4 4l-3 3"></path>
+                        <path d="M17 17l4 4"></path>
+                    </svg>
+                    Tomar Foto(s)
+                </button>
+                <div id="photos-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    </div>
+            </div>
+
+            <div class="bg-purple-50 p-6 rounded-lg shadow-sm">
+                <h3 class="text-xl font-medium text-purple-800 mb-4 flex items-center gap-2">
+                    <svg class="icon" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M14 3v4a1 1 0 0 0 1 1h4"></path>
+                        <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"></path>
+                        <path d="M9 7l1 0"></path>
+                        <path d="M9 13l4 0"></path>
+                        <path d="M9 17l4 0"></path>
+                    </svg>
+                    Visitas Anteriores
+                </h3>
+                <div id="past-visits-container" class="space-y-3">
+                    <p class="text-gray-600">No hay visitas guardadas para este usuario.</p>
+                </div>
+            </div>
+
+            <button id="logout-btn" class="btn btn-secondary w-full">
+                <svg class="icon" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                    <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"></path>
+                    <path d="M7 12h14l-3 -3m0 6l3 -3"></path>
+                </svg>
+                Cerrar Sesión
+            </button>
+        </div>
+
+        <div id="visit-questionnaire-section" class="hidden space-y-6">
+            <h2 class="text-2xl font-semibold text-center text-gray-700">Cuestionario de Visita a Agencia Automotriz</h2>
+
+            <div class="bg-indigo-50 p-6 rounded-lg shadow-sm space-y-4">
+                <h3 class="text-xl font-medium text-indigo-800">Detalles Generales</h3>
+                <div>
+                    <label for="agency-name" class="block text-sm font-medium text-gray-700 mb-1">Nombre de la Agencia:</label>
+                    <input type="text" id="agency-name" class="input-field" placeholder="Ej. Agencia Automotriz XYZ">
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="flex-1">
+                        <label for="visit-date" class="block text-sm font-medium text-gray-700 mb-1">Fecha de Visita:</label>
+                        <input type="date" id="visit-date" class="input-field">
+                    </div>
+                    <div class="flex-1">
+                        <label for="visit-time" class="block text-sm font-medium text-gray-700 mb-1">Hora de Visita:</label>
+                        <input type="time" id="visit-time" class="input-field">
+                    </div>
+                </div>
+                <div>
+                    <label for="salesperson-name" class="block text-sm font-medium text-gray-700 mb-1">Nombre del Asesor de Ventas (si aplica):</label>
+                    <input type="text" id="salesperson-name" class="input-field" placeholder="Ej. Juan Pérez">
+                </div>
+            </div>
+
+            <div class="bg-yellow-50 p-6 rounded-lg shadow-sm space-y-4">
+                <h3 class="text-xl font-medium text-yellow-800">Atención y Servicio</h3>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">1. ¿Cómo fue el saludo inicial?</label>
+                    <div class="flex flex-wrap gap-4 radio-group">
+                        <label><input type="radio" name="q1-greeting" value="Excelente"> Excelente</label>
+                        <label><input type="radio" name="q1-greeting" value="Bueno"> Bueno</label>
+                        <label><input type="radio" name="q1-greeting" value="Regular"> Regular</label>
+                        <label><input type="radio" name="q1-greeting" value="Malo"> Malo</label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">2. ¿El asesor demostró conocimiento del producto?</label>
+                    <div class="flex flex-wrap gap-4 radio-group">
+                        <label><input type="radio" name="q2-knowledge" value="Sí, muy bien"> Sí, muy bien</label>
+                        <label><input type="radio" name="q2-knowledge" value="Suficiente"> Suficiente</label>
+                        <label><input type="radio" name="q2-knowledge" value="Poco"> Poco</label>
+                        <label><input type="radio" name="q2-knowledge" value="No"> No</label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">3. ¿Se ofreció una prueba de manejo?</label>
+                    <div class="flex flex-wrap gap-4 radio-group">
+                        <label><input type="radio" name="q3-test-drive" value="Sí"> Sí</label>
+                        <label><input type="radio" name="q3-test-drive" value="No"> No</label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">4. ¿Cómo fue el proceso de negociación/cierre?</label>
+                    <textarea id="q4-negotiation" class="input-field h-24" placeholder="Comentarios sobre la negociación..."></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">5. Calificación general de la visita (1-5, donde 5 es excelente):</label>
+                    <input type="number" id="q5-overall-rating" class="input-field w-24" min="1" max="5" placeholder="Ej. 4">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">6. ¿Qué tan probable es que recomiende esta agencia? (0-10, donde 10 es muy probable)</label>
+                    <input type="range" id="q6-recommendation" min="0" max="10" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg">
+                    <span id="q6-recommendation-value" class="block text-center text-sm text-gray-600 mt-1">5</span>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">7. Comentarios adicionales:</label>
+                    <textarea id="q7-additional-comments" class="input-field h-32" placeholder="Cualquier otro comentario relevante..."></textarea>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button id="save-visit-btn" class="btn btn-primary flex-1">
+                    <svg class="icon" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2"></path>
+                        <path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+                        <path d="M14 4l0 4l-6 0l0 -4"></path>
+                    </svg>
+                    Guardar Visita
+                </button>
+                <button id="back-to-app-btn" class="btn btn-secondary flex-1">
+                    <svg class="icon" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M9 11l-4 4l4 4m-4 -4h11a4 4 0 0 0 0 -8h-1"></path>
+                    </svg>
+                    Volver al Menú Principal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-message-box" class="message-box"></div>
+
+    <script>
+        // DOM element references
+        const authSection = document.getElementById('auth-section');
+        const appSection = document.getElementById('app-section');
+        const visitQuestionnaireSection = document.getElementById('visit-questionnaire-section');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const currentUsernameSpan = document.getElementById('current-username');
+        const userIdDisplay = document.getElementById('user-id-display');
+
+        const recordBtn = document.getElementById('record-btn');
+        const stopRecordBtn = document.getElementById('stop-record-btn');
+        const recordingIndicator = document.getElementById('recording-indicator');
+        const audioRecordingsContainer = document.getElementById('audio-recordings-container');
+
+        const photoInput = document.getElementById('photo-input');
+        const takePhotoBtn = document.getElementById('take-photo-btn');
+        const photosContainer = document.getElementById('photos-container');
+
+        const customMessageBox = document.getElementById('custom-message-box');
+
+        const startVisitBtn = document.getElementById('start-visit-btn');
+        const saveVisitBtn = document.getElementById('save-visit-btn');
+        const backToAppBtn = document.getElementById('back-to-app-btn');
+        const pastVisitsContainer = document.getElementById('past-visits-container');
+
+        // Questionnaire fields references
+        const agencyNameInput = document.getElementById('agency-name');
+        const visitDateInput = document.getElementById('visit-date');
+        const visitTimeInput = document.getElementById('visit-time');
+        const salespersonNameInput = document.getElementById('salesperson-name');
+        const q4NegotiationTextarea = document.getElementById('q4-negotiation');
+        const q5OverallRatingInput = document.getElementById('q5-overall-rating');
+        const q6RecommendationInput = document.getElementById('q6-recommendation');
+        const q6RecommendationValueSpan = document.getElementById('q6-recommendation-value');
+        const q7AdditionalCommentsTextarea = document.getElementById('q7-additional-comments');
+
+
+        let mediaRecorder;
+        let audioChunks = [];
+        let currentStream; // To store the audio stream reference
+
+        // Function to display custom messages (replaces alert())
+        function showMessage(message, duration = 3000) {
+            customMessageBox.textContent = message;
+            customMessageBox.classList.add('show');
+            setTimeout(() => {
+                customMessageBox.classList.remove('show');
+            }, duration);
+        }
+
+        // --- Authentication Logic (Simulated with localStorage) ---
+
+        // Check if a user is logged in on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const loggedInUser = localStorage.getItem('loggedInUser');
+            if (loggedInUser) {
+                const user = JSON.parse(loggedInUser);
+                displayApp(user.username);
+                loadPastVisits(user.username); // Load visits on login
+            } else {
+                displayAuth();
+            }
+            // Display a simulated user ID for demonstration purposes
+            const simulatedUserId = localStorage.getItem('simulatedUserId') || `guest-${Math.random().toString(36).substring(2, 10)}`;
+            localStorage.setItem('simulatedUserId', simulatedUserId);
+            userIdDisplay.textContent = `ID de Sesión (simulado): ${simulatedUserId}`;
+        });
+
+        // Show authentication section
+        function displayAuth() {
+            authSection.classList.remove('hidden');
+            appSection.classList.add('hidden');
+            visitQuestionnaireSection.classList.add('hidden'); // Ensure questionnaire is hidden
+            usernameInput.value = '';
+            passwordInput.value = '';
+        }
+
+        // Show main app section
+        function displayApp(username) {
+            authSection.classList.add('hidden');
+            appSection.classList.remove('hidden');
+            visitQuestionnaireSection.classList.add('hidden'); // Ensure questionnaire is hidden
+            currentUsernameSpan.textContent = username;
+            loadPastVisits(username); // Reload visits every time the main app is returned to
+            // Clear audio and photo containers when returning to main app (assuming they are for the current visit)
+            audioRecordingsContainer.innerHTML = '';
+            photosContainer.innerHTML = '';
+            // Disable the start visit button until a new recording is made
+            startVisitBtn.disabled = true;
+        }
+
+        // Show questionnaire section
+        function displayQuestionnaire() {
+            appSection.classList.add('hidden');
+            authSection.classList.add('hidden');
+            visitQuestionnaireSection.classList.remove('hidden');
+            resetQuestionnaireForm(); // Clear the form when starting a new visit
+        }
+
+        // Register a new user
+        registerBtn.addEventListener('click', () => {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!username || !password) {
+                showMessage('Por favor, introduce un usuario y una contraseña.');
+                return;
+            }
+
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+
+            if (users[username]) {
+                showMessage('El usuario ya existe. Por favor, inicia sesión o elige otro nombre.');
+                return;
+            }
+
+            users[username] = password; // In a real app, password would be hashed
+            localStorage.setItem('users', JSON.stringify(users));
+            showMessage('Usuario registrado con éxito. Ahora puedes iniciar sesión.');
+            usernameInput.value = '';
+            passwordInput.value = '';
+        });
+
+        // Log in user
+        loginBtn.addEventListener('click', () => {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!username || !password) {
+                showMessage('Por favor, introduce tu usuario y contraseña.');
+                return;
+            }
+
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+
+            if (users[username] && users[username] === password) { // In a real app, hash would be compared
+                localStorage.setItem('loggedInUser', JSON.stringify({ username: username }));
+                displayApp(username);
+                showMessage(`Bienvenido, ${username}!`);
+            } else {
+                showMessage('Usuario o contraseña incorrectos.');
+            }
+        });
+
+        // Log out user
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('loggedInUser');
+            displayAuth();
+            showMessage('Sesión cerrada.');
+        });
+
+        // --- Audio Recording Logic ---
+
+        recordBtn.addEventListener('click', async () => {
+            try {
+                // Request microphone access
+                currentStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(currentStream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+
+                    // Create an audio element to play the recording
+                    const audioDiv = document.createElement('div');
+                    audioDiv.className = 'flex items-center justify-between bg-white p-3 rounded-lg shadow-sm';
+                    audioDiv.innerHTML = `
+                        <audio controls src="${audioUrl}" class="flex-grow mr-4"></audio>
+                        <a href="${audioUrl}" download="grabacion-${new Date().getTime()}.webm" class="btn btn-secondary">
+                            <svg class="icon" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path>
+                                <path d="M7 11l5 5l5 -5"></path>
+                                <path d="M12 4v12"></path>
+                            </svg>
+                            Descargar
+                        </a>
+                    `;
+                    audioRecordingsContainer.prepend(audioDiv); // Add to the beginning
+
+                    // Stop all tracks of the stream to release the microphone
+                    if (currentStream) {
+                        currentStream.getTracks().forEach(track => track.stop());
+                        currentStream = null;
+                    }
+
+                    // Enable the questionnaire button after recording is stopped
+                    startVisitBtn.disabled = false;
+                    showMessage('Grabación detenida. Audio guardado. Ahora puedes iniciar el cuestionario.');
+                };
+
+                mediaRecorder.start();
+                showMessage('Grabando audio...');
+                recordBtn.disabled = true;
+                stopRecordBtn.disabled = false;
+                recordingIndicator.classList.add('active');
+                // Disable questionnaire button while recording
+                startVisitBtn.disabled = true;
+
+            } catch (err) {
+                console.error('Error al acceder al micrófono:', err);
+                showMessage('No se pudo acceder al micrófono. Por favor, concede permisos.');
+                recordBtn.disabled = false;
+                stopRecordBtn.disabled = true;
+                recordingIndicator.classList.remove('active');
+                startVisitBtn.disabled = true; // Ensure it remains disabled on error
+            }
+        });
+
+        stopRecordBtn.addEventListener('click', () => {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                // Message and button enabling handled in mediaRecorder.onstop
+            }
+        });
+
+        // --- Photo Capture Logic ---
+
+        takePhotoBtn.addEventListener('click', () => {
+            // Activate the file input to select or take a photo
+            photoInput.click();
+        });
+
+        photoInput.addEventListener('change', (event) => {
+            const files = event.target.files;
+            if (files.length > 0) {
+                // Iterate over selected files (allows multiple photos)
+                Array.from(files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const imgContainer = document.createElement('div');
+                        imgContainer.className = 'relative group'; // For hover effects
+                        imgContainer.innerHTML = `
+                            <img src="${e.target.result}" alt="Foto de visita" class="w-full h-auto rounded-lg shadow-md">
+                            <button class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity delete-photo-btn">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        `;
+                        photosContainer.prepend(imgContainer); // Add photo to the beginning
+
+                        // Add event to delete the photo
+                        imgContainer.querySelector('.delete-photo-btn').addEventListener('click', () => {
+                            imgContainer.remove();
+                            showMessage('Foto eliminada.');
+                        });
+                    };
+                    reader.readAsDataURL(file); // Read file as data URL
+                });
+                showMessage(`Se ${files.length > 1 ? 'han tomado' : 'ha tomado'} ${files.length} foto(s).`);
+            }
+        });
+
+        // --- Visit Questionnaire Logic ---
+
+        // Navigate to questionnaire
+        startVisitBtn.addEventListener('click', () => {
+            displayQuestionnaire();
+        });
+
+        // Return to main menu
+        backToAppBtn.addEventListener('click', () => {
+            const loggedInUser = localStorage.getItem('loggedInUser');
+            if (loggedInUser) {
+                const user = JSON.parse(loggedInUser);
+                displayApp(user.username);
+            } else {
+                displayAuth(); // Fallback if no user logged in (should be logged in)
+            }
+        });
+
+        // Update recommendation slider value
+        q6RecommendationInput.addEventListener('input', () => {
+            q6RecommendationValueSpan.textContent = q6RecommendationInput.value;
+        });
+
+        // Function to reset the questionnaire form
+        function resetQuestionnaireForm() {
+            agencyNameInput.value = '';
+            visitDateInput.value = '';
+            visitTimeInput.value = '';
+            salespersonNameInput.value = '';
+            q4NegotiationTextarea.value = '';
+            q5OverallRatingInput.value = '';
+            q6RecommendationInput.value = '5'; // Default value
+            q6RecommendationValueSpan.textContent = '5';
+            q7AdditionalCommentsTextarea.value = '';
+
+            // Uncheck all radio buttons
+            document.querySelectorAll('input[type="radio"]').forEach(radio => radio.checked = false);
+
+            // Clear recordings and photos from the current session
+            audioRecordingsContainer.innerHTML = '';
+            photosContainer.innerHTML = '';
+        }
+
+        // Function to save visit data
+        saveVisitBtn.addEventListener('click', () => {
+            const username = JSON.parse(localStorage.getItem('loggedInUser')).username;
+            if (!username) {
+                showMessage('Error: No hay usuario logueado para guardar la visita.');
+                return;
+            }
+
+            // Collect form data
+            const visitData = {
+                id: `visit-${new Date().getTime()}`, // Unique ID for the visit
+                agencyName: agencyNameInput.value.trim(),
+                visitDate: visitDateInput.value,
+                visitTime: visitTimeInput.value,
+                salespersonName: salespersonNameInput.value.trim(),
+                q1Greeting: document.querySelector('input[name="q1-greeting"]:checked')?.value || '',
+                q2Knowledge: document.querySelector('input[name="q2-knowledge"]:checked')?.value || '',
+                q3TestDrive: document.querySelector('input[name="q3-test-drive"]:checked')?.value || '',
+                q4Negotiation: q4NegotiationTextarea.value.trim(),
+                q5OverallRating: q5OverallRatingInput.value,
+                q6Recommendation: q6RecommendationInput.value,
+                q7AdditionalComments: q7AdditionalCommentsTextarea.value.trim(),
+                // Here you would save URLs of recordings and photos if uploaded to a server
+                // For now, we just save a marker if there are recordings/photos
+                hasAudio: audioRecordingsContainer.children.length > 0,
+                hasPhotos: photosContainer.children.length > 0,
+                timestamp: new Date().toISOString()
+            };
+
+            // Basic validations
+            if (!visitData.agencyName || !visitData.visitDate || !visitData.visitTime) {
+                showMessage('Por favor, completa los campos obligatorios (Nombre de la Agencia, Fecha y Hora).');
+                return;
+            }
+
+            // Save to localStorage (simulated)
+            const allVisits = JSON.parse(localStorage.getItem(`visits_${username}`) || '[]');
+            allVisits.push(visitData);
+            localStorage.setItem(`visits_${username}`, JSON.stringify(allVisits));
+
+            showMessage('Visita guardada con éxito.');
+            resetQuestionnaireForm(); // Clear the form after saving
+            displayApp(username); // Return to main menu
+        });
+
+        // Function to load and display past visits
+        function loadPastVisits(username) {
+            const allVisits = JSON.parse(localStorage.getItem(`visits_${username}`) || '[]');
+            pastVisitsContainer.innerHTML = ''; // Clear container
+
+            if (allVisits.length === 0) {
+                pastVisitsContainer.innerHTML = '<p class="text-gray-600">No hay visitas guardadas para este usuario.</p>';
+                return;
+            }
+
+            // Sort visits by date and time descending
+            allVisits.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            allVisits.forEach(visit => {
+                const visitCard = document.createElement('div');
+                visitCard.className = 'bg-white p-4 rounded-lg shadow-sm border border-gray-200';
+                visitCard.innerHTML = `
+                    <h4 class="font-semibold text-lg text-gray-800">${visit.agencyName}</h4>
+                    <p class="text-sm text-gray-600">Fecha: ${visit.visitDate} ${visit.visitTime}</p>
+                    <p class="text-sm text-gray-600">Asesor: ${visit.salespersonName || 'N/A'}</p>
+                    <p class="text-sm text-gray-600">Calificación General: ${visit.q5OverallRating || 'N/A'}/5</p>
+                    <p class="text-sm text-gray-600">Recomendación: ${visit.q6Recommendation || 'N/A'}/10</p>
+                    <p class="text-sm text-gray-600">${visit.hasAudio ? '🎤 Audio grabado' : ''} ${visit.hasPhotos ? '📸 Fotos tomadas' : ''}</p>
+                `;
+                pastVisitsContainer.appendChild(visitCard);
+            });
+        }
+    </script>
+</body>
+</html>
